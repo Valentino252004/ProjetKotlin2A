@@ -1,15 +1,21 @@
 package com.example.projetkotlin
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.viewinterop.AndroidView
 import com.example.projetkotlin.ui.theme.ProjetKotlinTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,9 +28,23 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    Test()
+                    //Greeting("Android")
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun Test() {
+    val context = LocalContext.current;
+    Column (modifier = Modifier.fillMaxSize()) {
+        Text(text = "test")
+        Button(onClick = {
+            context.startActivity(Intent(context, ViewActivity::class.java))
+        }) {
+
         }
     }
 }
