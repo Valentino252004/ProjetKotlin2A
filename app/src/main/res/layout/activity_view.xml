@@ -18,6 +18,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/DiveList"
         android:layout_width="409dp"
         android:layout_height="671dp"
         tools:layout_editor_absoluteX="1dp"
