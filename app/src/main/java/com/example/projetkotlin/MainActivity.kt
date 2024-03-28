@@ -44,9 +44,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Test()
-                        //Greeting("Android")
                         Accueil()
+                        //Test()
                     }
                 }
             }
@@ -55,7 +54,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Test() {
+fun Accueil() {
     val context = LocalContext.current;
     Column() {
         Button(onClick = {
@@ -66,8 +65,15 @@ fun Test() {
     }
 }
 
+/*
+private fun getMembers(members: MutableLiveData<MutableList<Member>>) = runBlocking{
+    val response = ApiClient.apiService.getMembers()
+    members.postValue(response.body())
+}*/
+
+
 @Composable
-fun Accueil() {
+fun Test() {
     val state = remember { mutableStateOf(true) }
     if (state.value) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -75,6 +81,11 @@ fun Accueil() {
                 Text("Ajouter un membre")
             }
             Text(text = "Membres")
+        }
+        //val members = MutableLiveData<MutableList<Member>>()
+        //getMembers(members);
+        Column {
+            //members.toString();
         }
     } else {
         val forfait = listOf("enfant", "adulte")
@@ -116,7 +127,6 @@ fun Accueil() {
             InputField("Date de cerificat", dateCertificat, setDateCertificat)
             DropdownField("Type d'abonnement", forfait, selectedForfait, setForfait)
             DropdownField("Prérogative", prerogative, selectedProregative, setPrerogative)
-            2
             Button(onClick = { }) {
                 Text(text = "Ajouter")
             }
@@ -135,14 +145,14 @@ fun InputField(
     value: String,
     setValue: (String) -> Unit,
 ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(75.dp)
-        ) {
-            Text(text = "$text : ", modifier = Modifier.fillMaxWidth(0.4f))
-            TextField(value = value, onValueChange = setValue)
-        }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(75.dp)
+    ) {
+        Text(text = "$text : ", modifier = Modifier.fillMaxWidth(0.4f))
+        TextField(value = value, onValueChange = setValue)
+    }
 }
 
 @Composable
