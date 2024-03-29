@@ -1,9 +1,12 @@
 package com.example.projetkotlin
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,11 +34,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.MutableLiveData
+import com.example.projetkotlin.retrofit.Member
 import com.example.projetkotlin.ui.theme.ProjetKotlinTheme
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val etat = mutableStateOf(State.INCONNU)
+        val permissionRequest = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            etat.value = if (isGranted) {
+                State.AUTORISE
+            } else {
+                State.REFUSE
+            }
+        }
+        if (this.checkSelfPermission(android.Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED) {
+            etat.value = State.AUTORISE
+        } else if (this.shouldShowRequestPermissionRationale(android.Manifest.permission.INTERNET)) {
+            etat.value = State.EXPLICATION
+        } else {
+            permissionRequest.launch(android.Manifest.permission.INTERNET)
+        }
+
+
         setContent {
             ProjetKotlinTheme {
                 // A surface container using the 'background' color from the theme
@@ -43,10 +69,20 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Test()
-                        //Greeting("Android")
-                        Accueil()
+                    when (etat.value) {
+                        State.INCONNU -> Text(text = "Unknown Permission State")
+                        State.AUTORISE ->
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                Accueil()
+                                Test()
+                            }
+
+                        State.REFUSE -> Text(text = "Vous avez refusé les permissions.")
+                        State.EXPLICATION -> ExplicationPermission(
+                            explication = "Nous avons besoin des permissions internet pour le bon fonctionnement de l'application (requêtes à l'api)",
+                            permission = android.Manifest.permission.INTERNET,
+                            permissionRequest
+                        )
                     }
                 }
             }
@@ -55,7 +91,23 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Test() {
+fun ExplicationPermission(
+    explication: String,
+    permission: String,
+    permissionRequest: ActivityResultLauncher<String>
+) {
+    Column {
+        Text(text = explication)
+        Button(onClick = { permissionRequest.launch(permission) }) {
+            Text(text = "Redemander l'autorisation")
+        }
+    }
+}
+
+
+
+@Composable
+fun Accueil() {
     val context = LocalContext.current;
     Column() {
         Button(onClick = {
@@ -66,8 +118,15 @@ fun Test() {
     }
 }
 
+
+private fun getMembers(members: MutableLiveData<Member>) = runBlocking {
+    val response = ApiClient.apiService.getMembers()
+    members.postValue(response.body())
+}
+
+
 @Composable
-fun Accueil() {
+fun Test() {
     val state = remember { mutableStateOf(true) }
     if (state.value) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -75,6 +134,11 @@ fun Accueil() {
                 Text("Ajouter un membre")
             }
             Text(text = "Membres")
+        }
+        val members = MutableLiveData<Member>()
+        getMembers(members);
+        Column {
+            Text(members.value.toString())
         }
     } else {
         val forfait = listOf("enfant", "adulte")
@@ -116,7 +180,6 @@ fun Accueil() {
             InputField("Date de cerificat", dateCertificat, setDateCertificat)
             DropdownField("Type d'abonnement", forfait, selectedForfait, setForfait)
             DropdownField("Prérogative", prerogative, selectedProregative, setPrerogative)
-            2
             Button(onClick = { }) {
                 Text(text = "Ajouter")
             }
@@ -135,14 +198,14 @@ fun InputField(
     value: String,
     setValue: (String) -> Unit,
 ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(75.dp)
-        ) {
-            Text(text = "$text : ", modifier = Modifier.fillMaxWidth(0.4f))
-            TextField(value = value, onValueChange = setValue)
-        }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(75.dp)
+    ) {
+        Text(text = "$text : ", modifier = Modifier.fillMaxWidth(0.4f))
+        TextField(value = value, onValueChange = setValue)
+    }
 }
 
 @Composable

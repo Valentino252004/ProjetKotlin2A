@@ -11,8 +11,8 @@ import retrofit2.http.Path
 
 interface ApiService {
 
-    @GET("members")
-    suspend fun getMembers(): Response<MutableList<Member>>
+    @GET("/members")
+    suspend fun getMembers(): Response<Member>
 
     @POST("members")
     suspend fun createMember(@Body member: Member): Response<Member>
