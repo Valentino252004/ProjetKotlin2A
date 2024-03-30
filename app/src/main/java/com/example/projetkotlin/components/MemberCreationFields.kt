@@ -1,10 +1,12 @@
 package com.example.projetkotlin.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -29,7 +31,9 @@ fun InputField(
     Row(
         Modifier
             .fillMaxWidth()
-            .height(75.dp)
+            .height(75.dp),
+        verticalAlignment = Alignment.CenterVertically
+
     ) {
         Text(text = "$text : ", modifier = Modifier.fillMaxWidth(0.4f))
         TextField(value = value, onValueChange = setValue)
@@ -46,7 +50,8 @@ fun DropdownField(
     Row(
         Modifier
             .fillMaxWidth()
-            .height(75.dp)
+            .height(75.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = "$text : ")
         MyDropDownMenu(liste, value, setValue)
@@ -85,5 +90,4 @@ fun MyDropDownMenu(
             }
         }
     }
-
 }
