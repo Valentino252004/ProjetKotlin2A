@@ -2,8 +2,10 @@ package com.example.projetkotlin
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,10 +13,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -23,15 +27,21 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.projetkotlin.components.DropdownField
+import com.example.projetkotlin.components.InputField
+import com.example.projetkotlin.components.TableCell
 import com.example.projetkotlin.ui.theme.ProjetKotlinTheme
+import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,14 +55,17 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
                         Test()
-                        //Greeting("Android")
-                        Accueil()
+
+                        val apiRequest: APIClient by viewModels()
+
+                        Accueil(apiRequest)
                     }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun Test() {
@@ -67,7 +80,7 @@ fun Test() {
 }
 
 @Composable
-fun Accueil() {
+fun Accueil(apiRequest: APIClient) {
     val state = remember { mutableStateOf(true) }
     if (state.value) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -75,6 +88,15 @@ fun Accueil() {
                 Text("Ajouter un membre")
             }
             Text(text = "Membres")
+        }
+        val data = apiRequest.getResult().observeAsState()
+        apiRequest.getMembers()
+        Column {
+            if (data.value == null) {
+                CircularProgressIndicator()
+            } else {
+                MembersDisplay(JSONObject(data.value!!))
+            }
         }
     } else {
         val forfait = listOf("enfant", "adulte")
@@ -116,85 +138,35 @@ fun Accueil() {
             InputField("Date de cerificat", dateCertificat, setDateCertificat)
             DropdownField("Type d'abonnement", forfait, selectedForfait, setForfait)
             DropdownField("Prérogative", prerogative, selectedProregative, setPrerogative)
-            2
             Button(onClick = { }) {
                 Text(text = "Ajouter")
             }
         }
     }
-
-    Column {
-
-    }
-
 }
 
-@Composable
-fun InputField(
-    text: String,
-    value: String,
-    setValue: (String) -> Unit,
-) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(75.dp)
-        ) {
-            Text(text = "$text : ", modifier = Modifier.fillMaxWidth(0.4f))
-            TextField(value = value, onValueChange = setValue)
-        }
-}
 
 @Composable
-fun DropdownField(
-    text: String,
-    liste: List<String>,
-    value: Int,
-    setValue: (Int) -> Unit,
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .height(75.dp)
-    ) {
-        Text(text = "$text : ")
-        MyDropDownMenu(liste, value, setValue)
+fun MembersDisplay(members: JSONObject) {
+    Log.d("tag", members.toString())
+    val data = members.getJSONArray("data")
+    Row {
+        Text(text = "Cliquer sur un membre pour le modifier : ")
     }
-}
-
-@Composable
-fun MyDropDownMenu(
-    liste: List<String>,
-    selectedIndex: Int,
-    setForfait: (Int) -> Unit,
-) {
-    val shown = remember {
-        mutableStateOf(false)
+    Row (Modifier.padding(3.dp, 0.dp)) {
+        TableCell(text = "N° Licence", weight = 1f/3f, fontWeight = FontWeight.Bold)
+        TableCell(text = "Nom", weight = 1f/3f, fontWeight = FontWeight.Bold)
+        TableCell(text = "Prénom", weight = 1f/3f,fontWeight = FontWeight.Bold)
     }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentSize(Alignment.TopEnd)
-            .clickable { shown.value = !shown.value }
-    ) {
-        Row {
-            Text(text = liste[selectedIndex])
-            Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "more")
+    for (i in 0..<data.length()) {
+        val member = data.get(i) as JSONObject
+        val attributes = member.get("attributes") as JSONObject
+        Row (Modifier.padding(3.dp, 0.dp)) {
+            TableCell(text = attributes.getString("licence"), weight = 1f/3f)
+            TableCell(text = attributes.getString("name"), weight = 1f/3f)
+            TableCell(text = attributes.getString("surname"), weight = 1f/3f)
         }
     }
-    Box {
-        DropdownMenu(expanded = shown.value, onDismissRequest = { shown.value = false }) {
-            liste.forEachIndexed() { index, item ->
-                DropdownMenuItem(
-                    text = { Text(text = item) },
-                    onClick = {
-                        setForfait(index)
-                        shown.value = false
-                    })
-            }
-        }
-    }
-
 }
 
 
@@ -203,8 +175,6 @@ fun MyDropDownMenu(
 fun GreetingPreview() {
     ProjetKotlinTheme {
         Column {
-            Test()
-            Accueil()
         }
     }
 }
