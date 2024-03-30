@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +34,10 @@ import com.example.projetkotlin.components.InputField
 import com.example.projetkotlin.components.TableCell
 import com.example.projetkotlin.ui.theme.ProjetKotlinTheme
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +75,7 @@ fun Test() {
 
 @Composable
 fun Accueil(apiRequest: APIClient) {
-    val (state, setState) = remember { mutableStateOf(false) }
+    val (state, setState) = remember { mutableStateOf(true) }
     if (state) {
         Row(modifier = Modifier.fillMaxWidth()) {
             Button(onClick = { setState(false) }) {
@@ -83,11 +88,12 @@ fun Accueil(apiRequest: APIClient) {
             if (data.value == null) {
                 CircularProgressIndicator()
             } else {
-                MembersDisplay(JSONObject(data.value!!))
+                val json = data.value!!
+                MembersDisplay(JSONObject(json))
             }
         }
     } else {
-        AddMember(setState)
+        AddMember(setState, apiRequest)
     }
 }
 
@@ -115,7 +121,8 @@ fun MembersDisplay(members: JSONObject) {
 }
 
 @Composable
-fun AddMember(setState: (Boolean) -> Unit) {
+fun AddMember(setState: (Boolean) -> Unit, apiRequest: APIClient) {
+    apiRequest.resetResponse()
     val forfait = listOf("enfant", "adulte")
     val prerogative = listOf(
         "PB", "PA", "PO-12", "PO-20", "N1", "PA-12", "PE-40", "N2",
@@ -144,7 +151,10 @@ fun AddMember(setState: (Boolean) -> Unit) {
     }
 
     Column(modifier = Modifier.padding(3.dp, 0.dp)) {
-        Button(onClick = { setState(true) }) {
+        Button(onClick = {
+            apiRequest.resetResponse()
+            setState(true)
+        }) {
             Text(text = "Retour")
         }
         Row(
@@ -159,17 +169,116 @@ fun AddMember(setState: (Boolean) -> Unit) {
         InputField("Prenom", prenom, setPrenom)
         InputField("N° de license", numLicence, setNumLicense)
         InputField("Mot de passe", motDePasse, setMotDePasse)
-        InputField("Date de cerificat", dateCertificat, setDateCertificat)
+        InputField("Date du cerificat", dateCertificat, setDateCertificat)
         DropdownField("Type d'abonnement", forfait, selectedForfait, setForfait)
         DropdownField("Prérogative", prerogative, selectedProregative, setPrerogative)
-        Row (Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Button(onClick = { }, modifier = Modifier.fillMaxWidth(0.4f)) {
-                Text(text = "Ajouter")
+        val (error, setError) = remember { mutableStateOf("") }
+        val data = apiRequest.getResult().observeAsState()
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            val debugState = remember {
+                mutableStateOf(false)
             }
+            Button(onClick = {
+                debugState.value =
+                    testFields(nom, prenom, numLicence, motDePasse, dateCertificat, setError)
+                if (debugState.value) {
+                    apiRequest.postMember(
+                        nom,
+                        prenom,
+                        numLicence,
+                        motDePasse,
+                        dateCertificat,
+                        forfait[selectedForfait]
+                    )
+                }
+            }, modifier = Modifier.fillMaxWidth(0.4f)) {
+                Text(text = "Ajouter", fontSize = 15.sp)
+            }
+        }
+        if (data.value != null) {
+            var color = Color.Green
+            if (data.value.toString() != "Adhérent créé !") {
+                color = Color.Red
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                Text(text = data.value.toString(), color = color, fontSize = 20.sp)
+            }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Text(text = error, color = Color.Red)
         }
     }
 }
 
+
+fun testFields(
+    nom: String,
+    prenom: String,
+    numLicence: String,
+    motDePasse: String,
+    dateCertificat: String,
+    setError: (String) -> Unit
+): Boolean {
+    val nameRegex = Regex("[a-zA-Z .'-]*")
+    if (nom.isEmpty()) {
+        setError("Le nom ne doit pas être vide")
+        return false
+    }
+    if (!nameRegex.matches(nom)) {
+        setError("Le nom contient des caractères interdis")
+        return false
+    }
+    if (prenom.isEmpty()) {
+        setError("Le prenom ne doit pas être vide")
+        return false
+    }
+    if (!nameRegex.matches(prenom)) {
+        setError("Le prenom contient des caractères interdis")
+        return false
+    }
+    if (numLicence.isEmpty()) {
+        setError("Le N° de licence ne doit pas être vide")
+        return false
+    }
+    val licenceRegex = Regex("[A-Z]-[0-9]{2}-[0-9]{7}")
+    if (!licenceRegex.matches(numLicence)) {
+        setError("Le N° de licence doit être au format A-00-0000000")
+        return false
+    }
+    if (motDePasse.isEmpty()) {
+        setError("Le mot de passe ne doit pas être vide")
+        return false
+    }
+    if (dateCertificat.isEmpty()) {
+        setError("La date du certificat ne doit pas être vide")
+        return false
+    }
+    val dateRegex = Regex("[0-9]{2}/[0-9]{2}/[0-9]{4}")
+    if (!dateRegex.matches(dateCertificat)) {
+        setError("La date du certificat doit être au format DD/MM/YYYY")
+        return false
+    }
+    val dates = dateCertificat.split('/')
+    if (dates[0].toInt() > 31) {
+        setError("le jour " + dates[0] + " n'existe pas")
+        return false
+    }
+    if (dates[1].toInt() > 12) {
+        setError("le mois " + dates[1] + " n'existe pas")
+        return false
+    }
+    val format = SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE)
+    val date = format.parse(dateCertificat)
+    val calendar = Calendar.getInstance()
+    calendar.timeZone = TimeZone.getTimeZone("UTC+1")
+    val now = calendar.time
+    if (date!! > now) {
+        setError("La date du certificat doit être inférieure à la date d'aujourd'hui")
+        return false
+    }
+    setError("")
+    return true
+}
 
 @Preview(showBackground = true)
 @Composable
