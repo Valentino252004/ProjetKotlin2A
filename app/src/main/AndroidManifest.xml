@@ -18,9 +18,12 @@
             android:name=".ViewActivity"
             android:exported="false" />
         <activity
+            android:name=".ComposeActivity"
+            android:exported="true"
+            android:theme="@style/Theme.ProjetKotlin"  />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ProjetKotlin">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
