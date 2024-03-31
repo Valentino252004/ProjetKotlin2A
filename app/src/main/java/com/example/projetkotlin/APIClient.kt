@@ -48,6 +48,28 @@ class APIClient : ViewModel() {
         return response
     }
 
+    fun getSites(): LiveData<String?> {
+        Thread {
+            val url = URL("$baseUrl/sites")
+            Log.d("tag", "CallGetSites")
+            try {
+                val conn = url.openConnection() as HttpsURLConnection
+                conn.connect()
+                if (conn.responseCode == 200) {
+                    val buffer: BufferedReader = conn.inputStream.bufferedReader()
+                    response.postValue(buffer.readText())
+                } else {
+                    Log.d("tag", conn.responseMessage)
+                    response.postValue("Erreur de connexion au serveur")
+                }
+            } catch (e: Exception) {
+                Log.d("tag", e.message.toString())
+                response.postValue("Error")
+            }
+        }.start()
+        return response
+    }
+
 
     fun postMember(
         nom: String,
