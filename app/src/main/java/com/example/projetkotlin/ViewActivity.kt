@@ -27,10 +27,14 @@ class ViewActivity : AppCompatActivity() {
             val intent = Intent(applicationContext, MainActivity::class.java)
             applicationContext.startActivity(intent)
         }
-
         val listDives = findViewById<LinearLayout>(R.id.DiveList)
-
-
-
+        val oneDive = findViewById<LinearLayout>(R.id.dive)
+        val diveDate = findViewById<LinearLayout>(R.id.diveDate)
+        val divePlace = findViewById<LinearLayout>(R.id.divePlace)
+        val diveRegister = findViewById<LinearLayout>(R.id.diveRegister)
+        val diveSubmit = findViewById<Button>(R.id.diveSubmit)
+        val dataDate = findViewById<TextView>(R.id.dataDate)
+        val dataPlace = findViewById<TextView>(R.id.dataPlace)
+        val dataSlot = findViewById<TextView>(R.id.dataSlot)
     }
 }
