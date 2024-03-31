@@ -3,6 +3,9 @@ package com.example.projetkotlin
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.GridView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -25,7 +28,9 @@ class ViewActivity : AppCompatActivity() {
             applicationContext.startActivity(intent)
         }
 
-        val recyclerView: RecyclerView = findViewById(R.id.DiveList)
+        val listDives = findViewById<LinearLayout>(R.id.DiveList)
+
+
 
     }
 }
